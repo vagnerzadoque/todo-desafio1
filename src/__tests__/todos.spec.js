@@ -194,8 +194,8 @@ describe('Todos', () => {
 
     await request(app)
       .delete(`/todos/${todo1Response.body.id}`)
+      .expect(204)
       .set('username', userResponse.body.username)
-      .expect(204);
 
     const listResponse = await request(app)
       .get('/todos')
