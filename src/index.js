@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 
 const { v4: uuidv4 } = require('uuid');
+const { request } = require('express');
 
 const app = express();
 
@@ -10,21 +11,16 @@ app.use(express.json());
 
 const users = [];
 
-function checksExistsUserAccount(request, response, next) {
+/* aplication meddleware */
+function checksExistsUserAccount (request, response, next) {
+  const { username} = request.headers;
+  const userExists = users.find(us => us.username === username);
+  if(!userExists) {
+    return response.status(404).json({ error: 'user not found'})
+  }
+  request.user = userExists
+  return next()
 
-  const {username} = request.headers
-
-  const userExists = users.find((us)=>{
-    return us.username === username
-  })
-  if(!userExists){
-    return response.status(404).json({
-       error: 'Mensagem do erro'
-     })
-    
-    }
-    request.user = userExists
-    return next();
 }
 
 app.post('/users', async (request, response) => {
@@ -109,13 +105,15 @@ app.patch('/todos/:id/done', checksExistsUserAccount, (request, response) => {
 app.delete('/todos/:id', checksExistsUserAccount, (request, response) => {
   const {user} = request
   const {id} = request.params
-  const todoIndex = user.todos.findindex(todo => todo.id === id);
+  const todoIndex = user.todos.findIndex(todo => todo.id === id);
 
   if(todoIndex === -1){
     return response.status(404).json({error: 'Todo no found'})
+  }else{
+
+    user.todos.splice(todoIndex, 1);
+    return response.status(204).json(user.todos)
   }
-  user.todos.splice(todoIndex, 1)
-  return response.status(204)
 });
 
 module.exports = app;
